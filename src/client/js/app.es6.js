@@ -1,14 +1,16 @@
 import MapboxglSpiderifier from './spider.es6.js';
 import mapboxgl from 'mapbox-gl';
 import GeoJSON from './geojson.min.js';
+import 'whatwg-fetch';
 
 (() => {
   "use strict";
   
   const config = {
-    googlekey: "1PeYaVWqSWABu6kWKI3VF48_iL-YLAyFJIo9j8Hnx73Y",
-    url: "https://docs.google.com/spreadsheet/pub",
-    qstring: "?hl=en_US&hl=en_US&output=html&key=",
+    googleKey: "AIzaSyBKGMdFjgGtx3rTwhQxnkE5pB6HjKqU50s",
+    spreadsheetId: "1PeYaVWqSWABu6kWKI3VF48_iL-YLAyFJIo9j8Hnx73Y",
+    sheetId: "Data",
+    url: "https://sheets.googleapis.com/v4/spreadsheets",
     uiFilters: { State: [], Technology: [], Category: [] },
     mapCenter: [-95.84, 37.81],
     mapZoom: 3,
@@ -34,16 +36,21 @@ import GeoJSON from './geojson.min.js';
     init(config);
   };
 
-  function init(cfg) {
-    Tabletop.init({
-      key: cfg.url + cfg.qstring + cfg.googlekey,
-      callback: render,
-      simpleSheet: true,
-    });
+  function init(config) {
+    const url = `${config.url}/${config.spreadsheetId}/values/${config.sheetId}?key=${config.googleKey}`;
+    const params = {
+      mode: 'cors',
+    };
+    fetch(url, params)
+      .then(resp => resp.json())
+      .then(render)
+      .catch(console.error);
   }
 
   function render(googledata /*, tabletop */) {
-    data = googledata; // make the data global
+    data = googledata.values; // make the data global
+    const headers = data.shift();
+    data = data.map(row => Object.fromEntries(headers.map((value, index) => [value, row[index]])));
 
     linkTitle(data); // mashup the project name and hyperlink
     buildUI(data);
